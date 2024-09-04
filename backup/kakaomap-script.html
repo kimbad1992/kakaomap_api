@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kakao Map API</title>
+    <script src="http://dapi.kakao.com/v2/maps/sdk.js?appkey=yourApiKey&libraries=clusterer,services"></script>
+</head>
+<style>
+    /*카테고리*/
+    #category {position:absolute;top:10px;left:10px;border-radius: 5px; border:1px solid #909090;box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);background: #fff;overflow: hidden;z-index: 2;padding-inline-start: 0px!important;}
+    #category li {float:left;list-style: none;width:70px;border-right:1px solid #acacac;padding:6px 0;text-align: center; cursor: pointer;}
+    #category li.on {background: #eee;}
+    #category li:hover {background: #ffe6e6;border-left:1px solid #acacac;margin-left: -1px;}
+    #category li:last-child{margin-right:0;border-right:0;}
+    #category li span {display: block;margin:0 auto 3px;width:27px;height: 28px;}
+    /*#category li .category_bg {background:url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/places_category.png) no-repeat;}*/
+    #category li .bank {background-position: -10px 0;}
+    #category li .mart {background-position: -10px -36px;}
+    #category li .pharmacy {background-position: -10px -72px;}
+    #category li .oil {background-position: -10px -108px;}
+    #category li .cafe {background-position: -10px -144px;}
+    #category li .store {background-position: -10px -180px;}
+    #category li.on .category_bg {background-position-x:-46px;}
+    .placeinfo_wrap {position:absolute;bottom:28px;left:-150px;width:300px;}
+    .placeinfo {position:relative;width:100%;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;padding-bottom: 10px;background: #fff;}
+    .placeinfo:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}
+    .placeinfo_wrap .after {content:'';position:relative;margin-left:-12px;left:50%;width:22px;height:12px;background:url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png')}
+    .placeinfo a, .placeinfo a:hover, .placeinfo a:active{color:#fff;text-decoration: none;}
+    .placeinfo a, .placeinfo span {display: block;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
+    .placeinfo span {margin:5px 5px 0 5px;cursor: default;font-size:13px;}
+    .placeinfo .title {font-weight: bold; font-size:14px;border-radius: 6px 6px 0 0;margin: -1px -1px 0 -1px;padding:10px; color: #fff;background: #d95050;background: #d95050 url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/arrow_white.png) no-repeat right 14px center;}
+    .placeinfo .tel {color:#0f7833;}
+    .placeinfo .jibun {color:#999;font-size:11px;margin-top:0;}
+
+    /*목록창*/
+    .map_wrap a, .map_wrap a:hover, .map_wrap a:active{color:#000;text-decoration: none;}
+    #menu_wrap {position:absolute;top:50px;left:0;bottom:0;width:250px;height:400px;margin:10px 0 0 10px;padding:5px;overflow-y:auto;background:rgba(255, 255, 255, 0.7);z-index: 1;font-size:12px;border-radius: 10px;}
+    .bg_white {background:#fff;}
+    #menu_wrap hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
+    #menu_wrap .option{text-align: center;}
+    #menu_wrap .option p {margin:10px 0;}
+    #menu_wrap .option button {margin-left:5px;}
+    #placesList {padding-inline-start: 0;}
+    #placesList li {list-style: none;}
+    #placesList .item {position:relative;border-bottom:1px solid #888;overflow: hidden;cursor: pointer;min-height: 65px;}
+    #placesList .item span {display: block;margin-top:4px;}
+    #placesList .item h5, #placesList .item .info {text-overflow: ellipsis;overflow: hidden;white-space: nowrap;}
+    #placesList .item .info{padding:10px 0 10px 55px;}
+    #placesList .info .gray {color:#8a8a8a;}
+    #placesList .info .jibun {padding-left:26px;background:url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/places_jibun.png) no-repeat;}
+    #placesList .info .tel {color:#009900;}
+    #placesList .item .markerbg {float:left;position:absolute;width:36px; height:37px;margin:10px 0 0 10px;background:url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_blue.png) no-repeat;}
+    #placesList .item .marker_1 {background-position: 0 -10px;}
+    #placesList .item .marker_2 {background-position: 0 -56px;}
+    #placesList .item .marker_3 {background-position: 0 -102px}
+    #placesList .item .marker_4 {background-position: 0 -148px;}
+    #placesList .item .marker_5 {background-position: 0 -194px;}
+    #placesList .item .marker_6 {background-position: 0 -240px;}
+    #placesList .item .marker_7 {background-position: 0 -286px;}
+    #placesList .item .marker_8 {background-position: 0 -332px;}
+    #placesList .item .marker_9 {background-position: 0 -378px;}
+    #placesList .item .marker_10 {background-position: 0 -423px;}
+    #placesList .item .marker_11 {background-position: 0 -470px;}
+    #placesList .item .marker_12 {background-position: 0 -516px;}
+    #placesList .item .marker_13 {background-position: 0 -562px;}
+    #placesList .item .marker_14 {background-position: 0 -608px;}
+    #placesList .item .marker_15 {background-position: 0 -654px;}
+    #pagination {margin:10px auto;text-align: center;}
+    #pagination a {display:inline-block;margin-right:10px;}
+    #pagination .on {font-weight: bold; cursor: default;color:#777;}
+
+    /*앵커 Wrap*/
+    #anchorWrap {display: flex;flex-wrap: wrap;flex-direction: row;align-content: flex-start;justify-content: space-between;}
+
+    /*그룹 Wrap*/
+
+</style>
+<body onload="updateMarkers()">
+<div id="mapWrap">
+    <div id="kakaoMap" style="width:auto;height:500px;">
+
+    </div>
+    <span id="boundary"></span>
+    <div id="customWrap">
+        <select id="markerFlag">
+            <option value="default">기본</option>
+            <option value="image">커스텀이미지</option>
+        </select>
+        <button type="button" id="toggleBtn">자치구별 표시중</button>
+    </div>
+    <div id="anchorWrap"></div>
+    <div id="groupWrap"></div>
+</div>
+</body>
+<script src="../js/groupTest.js"></script>
+<script src="../js/guCoords.js"></script>
+<script>
+    document.getElementById("groupWrap").style.display ='none'; // 최초 그룹 표시 숨김
+
+    // 샘플 데이터 관련 ---------------------------------------------------------------------------------------
+    var selectedGroup = [] // 현재 선택된 자치구명 배열 (도봉구, 성동구, 서초구)
+    var markerFlag = 'default'; // 기본마커/이미지마커 플래그
+    var toggleFlag = 'gu'; // 자치구/그룹별 플래그
+    //--------------------------------------------------------------------------------------------------------
+    // 이벤트 리스너
+    document.getElementById("markerFlag").addEventListener('change', function() {
+        markerFlag = this.value;
+        updateMarkers();
+    });
+    document.getElementById('toggleBtn').addEventListener('click', function() {
+        typeToggle();
+        updateMarkers();
+    });
+
+    // 최초 중앙 좌표
+    var center = {
+        latitude:37.45141588,
+        longitude:126.9047306
+    }
+
+    var mapContainer = document.getElementById('kakaoMap'), // 지도를 표시할 div
+        mapOption = {
+            center: new kakao.maps.LatLng(center.latitude, center.longitude),
+            level: 3 // 지도 생성 시 최초 확대 레벨
+        };
+
+    // 지도 생성
+    var map = new kakao.maps.Map(mapContainer, mapOption);
+
+    // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성
+    var zoomControl = new kakao.maps.ZoomControl();
+    map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+    // 마커 클러스터러를 생성
+    var clusterer = new kakao.maps.MarkerClusterer({
+        map: map, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+        averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+        minLevel: 3, // 클러스터 할 최소 지도 레벨
+        gridSize: 60, // 클러스터링 범위
+        minClusterSize: 2, // 클러스터링 할 최소 마커 갯수
+    });
+
+    var markerOptions = {
+        image: {
+            imageSrc: '/yellowcircle.png', // 커스텀 이미지 경로
+            imageSize: new kakao.maps.Size(25, 25), // 이미지 크기
+            imageOption: { offset: new kakao.maps.Point(12, 35) } // 이미지 옵션
+        },
+        default: {
+            // 기본 마커 옵션
+        }
+    };
+
+    var places = new kakao.maps.services.Places(); // 장소 검색 API
+    places.setMap(map);
+
+    // 마커 생성용 함수
+    function createMarker(vo) {
+        var position = new kakao.maps.LatLng(vo.위도, vo.경도);
+        var options = {};
+
+        switch (markerFlag) {
+            case "image" :  options.image = new kakao.maps.MarkerImage(
+                markerOptions.image.imageSrc,
+                markerOptions.image.imageSize,
+                markerOptions.image.imageOption
+            );
+            options.opacity = 0.7;
+            break;
+            case "default" : options = markerOptions.default; break;
+        }
+
+        var marker = new kakao.maps.Marker({
+            position: position,
+            ...options
+        });
+
+        // vo가 가진 인포윈도우용 정보가 있을 경우 생성
+        if (vo.someKey != undefined) {
+            // 마커에 표시할 인포윈도우를 생성
+            var infowindow = new kakao.maps.InfoWindow({
+                content: `` // 인포윈도우에 표시할 내용
+            });
+            kakao.maps.event.addListener(marker, 'mouseover', makeOverListener(map, marker, infowindow));
+            kakao.maps.event.addListener(marker, 'mouseout', makeOutListener(infowindow));
+        }
+
+        return marker;
+    }
+
+    // 지도 범위 내 마커 클러스터링
+    function updateMarkers() {
+        // 현재 지도 범위 가져오기
+        var bounds = map.getBounds();
+
+        // 클러스터러에서 모든 마커 제거
+        clusterer.clear();
+
+        // 라디오 버튼 그룹의 이름을 가정
+        var radioGroupName = 'group';
+
+        // 선택된 라디오 버튼을 찾는다
+        var radioButtons = document.querySelectorAll(`input[name="${radioGroupName}"]:checked`);
+
+        // 선택된 라디오 버튼이 있는지 확인
+        var selectedValue = radioButtons.length > 0 ? radioButtons[0].value : null;
+
+        var rawData = [];
+
+        if (toggleFlag === 'gu') {
+            rawData = guData;
+        } else {
+            if (selectedValue) {
+                rawData = groupData.filter(a => a.자치구 === selectedValue);
+            } else {
+                rawData = groupData;
+            }
+        }
+
+        // var rawData = toggleFlag === 'gu' ? guData : groupData;
+
+        // 현재 지도 범위에 있는 데이터로 마커 생성
+        var markers = rawData.filter(function (vo) {
+            var position = new kakao.maps.LatLng(vo.위도, vo.경도);
+            return bounds.contain(position);
+        }).map(function (vo) {
+            return createMarker(vo);
+        });
+
+        // 클러스터러에 마커들을 추가
+        clusterer.addMarkers(markers);
+    }
+
+    // 지도에 이벤트 리스너 추가
+    kakao.maps.event.addListener(map, 'idle', function() {
+        updateMarkers();
+    });
+
+    // 인포윈도우 표시 클로저
+    function makeOverListener(map, marker, infowindow) {
+        return function() {
+            infowindow.open(map, marker);
+        };
+    }
+
+    // 인포윈도우 닫는 클로저
+    function makeOutListener(infowindow) {
+        return function() {
+            infowindow.close();
+        };
+    }
+
+    // 입력좌표 / 샘플데이터 전환 버튼용 함수
+    function typeToggle() {
+        toggleFlag = toggleFlag === 'gu' ? 'group' : 'gu';
+        document.getElementById('toggleBtn').innerText = toggleFlag === 'gu' ? '자치구별 표시중' : '그룹별 표시중';
+        document.getElementById('anchorWrap').style.display = toggleFlag === 'gu' ? 'flex' : 'none'; // 앵커
+        document.getElementById('groupWrap').style.display = toggleFlag === 'gu' ? 'none' : 'inline-block';
+    }
+
+    // 입력된 좌표의 마커를 모두 포함하는 영역 보여주기
+    function setBounds(type) {
+        var bounds = new kakao.maps.LatLngBounds();
+
+        switch (type) {
+            case 'group':
+                groupData.forEach(function(vo) {
+                    bounds.extend(new kakao.maps.LatLng(vo.위도, vo.경도));
+                }); break;
+            case 'gu':
+                guData.forEach(function(vo) {
+                    bounds.extend(new kakao.maps.LatLng(vo.위도, vo.경도));
+                })
+        }
+
+        map.setBounds(bounds)
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    // 구현 요건 반영
+    //------------------------------------------------------------------------------------------------------------------
+
+    function drawAnchor() {
+        const anchorMap = new Map();
+
+        for (const item of guData) {
+            const title = `${item.자치구}`;
+
+            const anchor = document.createElement("a");
+            anchor.href = 'javascript:;';
+            anchor.title = title;
+            anchor.textContent = title;
+            anchor.onclick = () => {
+                var moveLatLng = new kakao.maps.LatLng(item.위도, item.경도);
+                map.setLevel(3) // 1~14레벨까지 기능
+                map.panTo(moveLatLng, { animate: { cancelable: false } }); // 애니메이션이 도중에 취소되지 않음
+            }
+
+            anchorMap.set(title, anchor);
+        }
+
+        for (const [title, anchor] of anchorMap.entries()) {
+            document.getElementById('anchorWrap').appendChild(anchor);
+        }
+    }
+
+    function drawRadio() {
+        var selectedGroup = [...new Set(groupData.map(vo => vo.자치구))]; // 현재 가진 자치구 그룹명 배열
+
+        const groupWrap = document.getElementById('groupWrap');
+
+        selectedGroup.forEach(groupName => {
+            // 라디오 버튼 요소 생성
+            const radioInput = document.createElement('input');
+            radioInput.type = 'radio';
+            radioInput.id = groupName;
+            radioInput.name = 'group';
+            radioInput.value = groupName;
+
+            radioInput.addEventListener('click', function() {
+                // 1. 선택된 자치구별 그룹 데이터 모으기
+                let filteredArr = groupData.filter(a => a.자치구 === this.value);
+                // 2. 해당 좌표 배열의 중앙값 구하기
+                let sumLat = 0, sumLng = 0;
+                let polygonPath = [];
+
+                filteredArr.forEach(vo => {
+                    sumLat += vo.위도;
+                    sumLng += vo.경도;
+                });
+                let centerLat = sumLat / filteredArr.length;
+                let centerLng = sumLng / filteredArr.length;
+
+                // 3. 해당 위치로 이동
+                var moveLatLng = new kakao.maps.LatLng(centerLat, centerLng);
+                map.setLevel(3); // 지도 확대 레벨 설정
+                map.panTo(moveLatLng); // 지도 중심 이동
+            });
+
+            // 라벨 요소 생성
+            const label = document.createElement('label');
+            label.htmlFor = groupName;
+            label.textContent = groupName;
+
+            // 라디오 버튼과 라벨을 groupWrap에 추가
+            groupWrap.appendChild(radioInput);
+            groupWrap.appendChild(label);
+        });
+    }
+
+    updateMarkers();
+    setBounds('gu'); // 현재 샘플데이터를 기준으로 최소축척으로 표시
+    drawAnchor();
+    drawRadio();
+
+</script>
+</html>
